@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>Order Up!</title>
+
+<style>
+/* ================== RESET ================== */
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+body {
+  margin: 0;
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ================== COMMON ================== */
+.hidden { display: none; }
+button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  background: #22c55e;
+  color: white;
+}
+button:hover { transform: scale(1.05); }
+
+/* ================== CARD ================== */
+.card {
+  padding: 10px 14px;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #60a5fa;
+  cursor: grab;
+  user-select: none;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+.card.correct {
+  background: #22c55e;
+  color: white;
+}
+.card.wrong {
+  background: #ef4444;
+  color: white;
+  animation: shake 0.4s 2;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-6px); }
+  100% { transform: translateX(0); }
+}
+
+/* ================== SETUP ================== */
+#setup {
+  background: white;
+  padding: 24px;
+  border-radius: 20px;
+  width: 360px;
+}
+#setup input, select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+/* ================== GAME ================== */
+#game {
+  background: white;
+  padding: 20px;
+  width: 95vw;
+  max-width: 900px;
+  border-radius: 20px;
+}
+
+#topCards, #dropZone {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 70px;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+#topCards {
+  background: #f1f5f9;
+}
+#dropZone {
+  background: #e0f2fe;
+}
+
+#vnMeaning {
+  font-weight: 700;
+  color: #065f46;
+  margin-bottom: 10px;
+}
+
+/* ================== MODAL ================== */
+#modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+ 
+  justify-content: center;
+  align-items: center;
+}
+#modalContent {
+  background: white;
+  padding: 24px;
+  border-radius: 20px;
+  width: 300px;
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ========== SETUP ========== -->
+<div id="setup">
+  <h2>🧩 Sentence Puzzle</h2>
+  <input id="username" placeholder="Your name" />
+  <label>Số câu: <span id="countLabel">10</span></label>
+  <input type="range" id="limitWord" min="1" max="100" value="10" />
+  <select id="sourceSelect">
+    <option value="random">Ngẫu nhiên</option>
+    <option value="recent">Mới nhất</option>
+  </select>
+  <button onclick="startGame()">Start</button>
+</div>
+
+<!-- ========== GAME ========== -->
+<div id="game" class="hidden">
+  <div id="vnMeaning"></div>
+  <div id="topCards"></div>
+  <div id="dropZone"></div>
+  <button id="nextBtn" class="hidden" onclick="nextSentence()">Next</button>
+</div>
+
+<!-- ========== MODAL ========== -->
+<div id="modal" class="hidden">
+  <div id="modalContent"></div>
+</div>
+
+<script>
+/* ================== CONFIG ================== */
+const API_URL = "https://script.google.com/macros/s/AKfycbx9KDjdJdPfn-tKnIrs1HINYjm8yik8kO4qI-AgbKtkAWVvWH7TCT4XaTtN9u0HaSfP/exec";
+
+/* ================== STATE ================== */
+let sentences = [];
+let index = 0;
+let score = 0;
+let failedOnce = new Set();
+let startTime = 0;
+
+/* ================== SETUP ================== */
+limitWord.oninput = () => countLabel.innerText = limitWord.value;
+
+/* ================== FETCH ================== */
+async function startGame() {
+  const user = username.value.trim() || '';
+  const limit = +parseInt(limitWord.value, 10);
+  const mode = sourceSelect.value;
+
+  let words = await fetchWords(user, limit, mode);
+
+
+  words.forEach((w) => {
+    sentences.push(parseExample(w));
+  });
+  sentences.sort(() => Math.random() - 0.5);
+
+
+  setup.classList.add("hidden");
+  game.classList.remove("hidden");
+
+  startTime = Date.now();
+  loadSentence();
+}
+
+async function fetchWords(user, total, mode) {
+
+  const url =
+    `${API_URL}?owner=${encodeURIComponent(user)}` +
+    `&limit=${total}` +
+    `&mode=${mode}`;
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Không kết nối được server');
+
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error);
+
+  return json.data;
+}
+
+/* ================== PARSE EXAMPLE ================== */
+function parseExample(w) {
+  const match = w.example.match(/(.+?)\s*\((.+)\)/);
+  return {
+    id: w.en,
+    en: match[1].trim(),
+    vn: match[2].trim(),
+    words: match[1].trim().split(" ")
+  };
+}
+
+/* ================== GAME LOGIC ================== */
+function loadSentence() {
+  topCards.innerHTML = "";
+  dropZone.innerHTML = "";
+  vnMeaning.innerText = "";
+  nextBtn.classList.add("hidden");
+
+  const s = sentences[index];
+  const shuffled = [...s.words].sort(() => Math.random() - 0.5);
+
+  shuffled.forEach(word => {
+    const card = createCard(word);
+    topCards.appendChild(card);
+  });
+}
+
+/* ================== CARD ================== */
+function createCard_old(text) {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerText = text;
+  card.draggable = true;
+
+  card.ondragstart = e => {
+    e.dataTransfer.setData("text", text);
+    e.dataTransfer.setData("id", Date.now());
+    card.dataset.dragging = "1";
+  };
+  return card;
+}
+
+function createCard(text){
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.textContent = text;
+
+  card.addEventListener('click', () => moveCard(card));
+  return card;
+}
+
+
+/* ================== DROP ================== */
+dropZone.ondragover = e => e.preventDefault();
+dropZone.ondrop = e => {
+  e.preventDefault();
+  const dragging = document.querySelector("[data-dragging='1']");
+  if (dragging) {
+    dragging.removeAttribute("data-dragging");
+    dropZone.appendChild(dragging);
+    checkIfDone();
+  }
+};
+
+/* ================== CHECK ================== */
+function checkIfDone() {
+  const cards = [...dropZone.children];
+  if (cards.length !== sentences[index].words.length) return;
+
+  const userSentence = cards.map(c => c.innerText).join(" ");
+  const correct = sentences[index].en;
+
+  if (userSentence === correct) {
+    cards.forEach(c => c.classList.add("correct"));
+    vnMeaning.innerText = sentences[index].vn;
+    speak(correct);
+
+    if (!failedOnce.has(index)) score++;
+    nextBtn.classList.remove("hidden");
+  } else {
+    cards.forEach(c => {
+      c.classList.add("wrong");
+      setTimeout(() => c.classList.remove("wrong"), 800);
+    });
+    failedOnce.add(index);
+  }
+}
+
+/* ================== NEXT ================== */
+function nextSentence() {
+  index++;
+  if (index >= sentences.length) return showResult();
+  loadSentence();
+}
+
+/* ================== RESULT ================== */
+function showResult() {
+  const time = Math.floor((Date.now() - startTime) / 1000);
+  modal.classList.remove("hidden");
+  modalContent.innerHTML = `
+    <h3>🎉 Hoàn thành</h3>
+    <p>⏱ ${time}s</p>
+    <p>⭐ ${score}/${sentences.length}</p>
+    <button onclick="location.reload()">Chơi lại</button>
+  `;
+}
+
+/* ================== TTS ================== */
+function speak(text) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "en-US";
+  speechSynthesis.speak(u);
+}
+</script>
+
+</body>
+</html>
