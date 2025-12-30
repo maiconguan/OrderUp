@@ -239,6 +239,7 @@ let index = 0;
 let score = 0;
 let failedOnce = new Set();
 let startTime = 0;
+let timerInterval = null;
 
 /* ================== SETUP ================== */
 limitWord.oninput = () => countLabel.innerText = limitWord.value;
@@ -389,6 +390,37 @@ function updateProgress() {
     `${percent}%`;
 }
 
+function formatTime(totalSeconds) {
+  totalSeconds = Math.floor(totalSeconds);
+
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+
+  // < 1 phút
+  if (totalSeconds < 60) {
+    return `${s}s`;
+  }
+
+  // < 1 giờ
+  if (totalSeconds < 3600) {
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  // >= 1 giờ
+  return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function startTimer() {
+  startTime = Date.now();
+  clearInterval(timerInterval);
+
+  timerInterval = setInterval(() => {
+    const t = Math.floor((Date.now() - startTime) / 1000);
+    timeEl.textContent = formatTime(t);
+  }, 1000);
+}
+
 /* ================== RESULT ================== */
 function showResult() {
   const time = Math.floor((Date.now() - startTime) / 1000);
@@ -404,12 +436,12 @@ function showResult() {
 
 function restartGame() {
   modal.classList.add("hidden");
-  startTime = Date.now();
   index = 0;
   score = 0;
   scoreEl.textContent = score;
   gameScreen.style.display = "block";
   loadSentence();
+  startTimer();
 };
 
 
