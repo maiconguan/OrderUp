@@ -61,6 +61,17 @@ button:hover { transform: scale(1.05); }
   100% { transform: translateX(0); }
 }
 
+
+/* animation state */
+.card.fly-down {
+  transform: translateY(80px) scale(.9);
+  opacity: .7;
+}
+.card.fly-up {
+  transform: translateY(-80px) scale(.9);
+  opacity: .7;
+}
+
 /* ================== SETUP ================== */
 #setup {
   background: white;
@@ -108,6 +119,7 @@ button:hover { transform: scale(1.05); }
   margin-bottom: 10px;
 }
 
+
 /* ================== MODAL ================== */
 #modal {
   position: fixed;
@@ -124,6 +136,7 @@ button:hover { transform: scale(1.05); }
   width: 300px;
   text-align: center;
 }
+
 </style>
 </head>
 
@@ -270,6 +283,30 @@ dropZone.ondrop = e => {
     checkIfDone();
   }
 };
+
+// const pool = document.getElementById('pool');
+// const sentence = document.getElementById('sentence');
+
+function moveCard(card){
+  const fromPool = card.parentElement === topCards;
+
+  // add animation class
+  card.classList.add(fromPool ? 'fly-down' : 'fly-up');
+
+  // sau animation -> move DOM
+  setTimeout(() => {
+    card.classList.remove('fly-down','fly-up');
+
+    if(fromPool){
+      dropZone.appendChild(card); // xuống dưới
+      checkIfDone();
+    } else {
+      topCards.appendChild(card);     // bay lên trên
+    }
+
+  }, 300);
+}
+
 
 /* ================== CHECK ================== */
 function checkIfDone() {
