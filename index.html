@@ -381,7 +381,7 @@ function moveCard(card){
     } else {
       topCards.appendChild(card);     // bay lên trên
     }
-  },500);
+  },300);
 
 
 
@@ -533,6 +533,7 @@ function restartGame() {
   gameScreen.style.display = "block";
   loadSentence();
   startTimer();
+  updateProgress();
 };
 
 
