@@ -189,7 +189,7 @@ button:hover { transform: scale(1.05); }
 
 <!-- ========== SETUP ========== -->
 <div id="setup">
-  <h2>🧩 Sentence Puzzle</h2>
+  <h2>🧩 ORDER UP!!!</h2>
   <input id="username" placeholder="Your name" />
   <label>Số câu: <span id="countLabel">10</span></label>
   <input type="range" id="limitWord" min="1" max="100" value="10" />
@@ -360,7 +360,10 @@ function checkIfDone() {
       score++;
       scoreEl.textContent = score;
     }
-    nextBtn.classList.remove("hidden");
+
+    
+    goToNextQuestion();
+
   } else {
     cards.forEach(c => {
       c.classList.add("wrong");
@@ -371,10 +374,22 @@ function checkIfDone() {
 }
 
 /* ================== NEXT ================== */
+function goToNextQuestion(){
+  if (index < (sentences.length - 1)){
+    nextBtn.classList.remove("hidden");
+  }
+  else {
+    nextSentence();
+  }
+}
+
 function nextSentence() {
   index++;
   updateProgress();
-  if (index >= sentences.length) return showResult();
+
+  if (index >= sentences.length) 
+    return showResult();
+
   loadSentence();
 }
 
@@ -423,18 +438,32 @@ function startTimer() {
 
 /* ================== RESULT ================== */
 function showResult() {
-  const time = Math.floor((Date.now() - startTime) / 1000);
+  clearInterval(timerInterval);
+
   modal.classList.remove("hidden");
   modalContent.innerHTML = `
     <h3>🎉 Hoàn thành</h3>
-    <p>⏱ ${time}s</p>
+    <p>⏱ ${timeEl.textContent}</p>
     <p>⭐ ${score}/${sentences.length}</p>
     <button onclick="restartGame()">🔄 Chơi lại</button>
     <button onclick="location.reload()">✨ Tạo mới</button>
   `;
 }
+function showModal(msg) {
+  const time = Math.floor((Date.now() - startTime) / 1000);
+  modal.classList.remove("hidden");
+  modalContent.innerHTML = `
+    <p>${msg}</p>
+    <button onclick="location.reload()">✨ Tạo mới</button>
+  `;
+}
 
 function restartGame() {
+  if(sentences.length < 1) {
+    showModal('⚠ Không thể tạo game do từ bạn chọn không có ví dụ!!!');
+    return;
+  }
+
   modal.classList.add("hidden");
   index = 0;
   score = 0;
