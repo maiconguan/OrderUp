@@ -145,6 +145,43 @@ button:hover { transform: scale(1.05); }
   max-width: 90%; /* Để không bị tràn trên điện thoại */
 }
 
+#gameScreen {
+    display: none;
+  }
+
+  #topBar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  #progressWrapper {
+  width: 100%;
+  margin: 12px auto 16px;
+  text-align: center;
+}
+
+#progressText {
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #1f2937;
+}
+
+.progress-bar {
+  height: 14px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(135deg, #22c55e, #4ade80);
+  transition: width 0.35s ease;
+}
+
 </style>
 </head>
 
@@ -164,12 +201,13 @@ button:hover { transform: scale(1.05); }
 </div>
 
 <!-- ========== GAME ========== -->
-<div id="gameScreen">
+
+
+<div id="game" class="hidden">
+  <div id="gameScreen">
   <div id="topBar">
     <div>⏱️ <span id="timeEl">0</span></div>
     <div id="progressText">0 / 0</div>
-
-
     <div>⭐ Điểm: <span id="scoreEl">0</span></div>
   </div>
 
@@ -178,11 +216,8 @@ button:hover { transform: scale(1.05); }
         <div class="progress-fill" id="progressFill"></div>
       </div>
     </div>
-
-  <div id="grid"></div>
 </div>
 
-<div id="game" class="hidden">
   <div id="vnMeaning"></div>
   <div id="topCards"></div>
   <div id="dropZone"></div>
@@ -227,8 +262,9 @@ async function startGame() {
   setup.classList.add("hidden");
   game.classList.remove("hidden");
 
-  startTime = Date.now();
-  loadSentence();
+  restartGame();
+  // startTime = Date.now();
+  // loadSentence();
 }
 
 async function fetchWords(user, total, mode) {
@@ -319,7 +355,10 @@ function checkIfDone() {
     vnMeaning.innerText = sentences[index].vn;
     speak(correct);
 
-    if (!failedOnce.has(index)) score++;
+    if (!failedOnce.has(index)) {
+      score++;
+      scoreEl.textContent = score;
+    }
     nextBtn.classList.remove("hidden");
   } else {
     cards.forEach(c => {
@@ -333,8 +372,21 @@ function checkIfDone() {
 /* ================== NEXT ================== */
 function nextSentence() {
   index++;
+  updateProgress();
   if (index >= sentences.length) return showResult();
   loadSentence();
+}
+
+function updateProgress() {
+  const percent = index === 0
+    ? 0
+    : Math.round((index / sentences.length) * 100);
+
+  document.getElementById('progressText').innerText =
+    `${index} / ${sentences.length}`;
+
+  document.getElementById('progressFill').style.width =
+    `${percent}%`;
 }
 
 /* ================== RESULT ================== */
@@ -355,6 +407,8 @@ function restartGame() {
   startTime = Date.now();
   index = 0;
   score = 0;
+  scoreEl.textContent = score;
+  gameScreen.style.display = "block";
   loadSentence();
 };
 
