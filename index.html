@@ -182,6 +182,15 @@ button:hover { transform: scale(1.05); }
   transition: width 0.35s ease;
 }
 
+.flying{
+  position:fixed;
+  z-index:9999;
+  pointer-events:none;
+  transition:
+    transform .5s cubic-bezier(.4,1.4,.6,1),
+    opacity .4s;
+}
+
 </style>
 </head>
 
@@ -325,12 +334,46 @@ function createCard(text){
 function moveCard(card){
   const fromPool = card.parentElement === topCards;
 
-  // add animation class
-  card.classList.add(fromPool ? 'fly-down' : 'fly-up');
+  //
+  /* 1. Lấy vị trí bắt đầu */
+  const start = card.getBoundingClientRect();
+  /* 2. Xác định vị trí đích = cuối câu */
+  const temp = document.createElement('span');
+  if(fromPool) {
+    dropZone.appendChild(temp);
+  }
+  else {
+    topCards.appendChild(temp);
+  }
+  const end = temp.getBoundingClientRect();
+  temp.remove();
 
-  // sau animation -> move DOM
-  setTimeout(() => {
-    card.classList.remove('fly-down','fly-up');
+  /* 3. Clone card */
+  const clone = card.cloneNode(true);
+  clone.classList.add('flying');
+
+  clone.style.left = start.left + 'px';
+  clone.style.top  = start.top + 'px';
+  clone.style.width = start.width + 'px';
+  clone.style.height = start.height + 'px';
+
+  /* 4. Ẩn card gốc tạm thời */
+  card.style.visibility = 'hidden';
+  document.body.appendChild(clone);
+
+
+  /* 5. Animate */
+  requestAnimationFrame(()=>{
+    clone.style.transform = `
+      translate(${end.left - start.left}px,
+                ${end.top  - start.top}px)`;
+  });
+
+  /* 6. Kết thúc animation */
+  setTimeout(()=>{
+    //card.classList.remove('flying');
+    clone.remove();
+    card.style.visibility = '';
 
     if(fromPool){
       dropZone.appendChild(card); // xuống dưới
@@ -338,8 +381,27 @@ function moveCard(card){
     } else {
       topCards.appendChild(card);     // bay lên trên
     }
+  },500);
 
-  }, 300);
+
+
+
+
+  // add animation class
+  // card.classList.add(fromPool ? 'fly-down' : 'fly-up');
+
+  // // sau animation -> move DOM
+  // setTimeout(() => {
+  //   card.classList.remove('fly-down','fly-up');
+
+  //   if(fromPool){
+  //     dropZone.appendChild(card); // xuống dưới
+  //     checkIfDone();
+  //   } else {
+  //     topCards.appendChild(card);     // bay lên trên
+  //   }
+
+  // }, 300);
 }
 
 
