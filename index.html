@@ -191,6 +191,50 @@ button:hover { transform: scale(1.05); }
     opacity .4s;
 }
 
+.btn-study {
+  /* Màu sắc và hình dáng */
+  background: linear-gradient(135deg, #6e8efb, #a777e3); /* Màu gradient xanh tím trẻ trung */
+  color: white;
+  padding: 12px 28px;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  border-radius: 50px; /* Bo tròn hoàn toàn tạo cảm giác thân thiện */
+  cursor: pointer;
+  margin: 10px 10px;
+  
+  /* Đổ bóng nhẹ tạo độ nổi (3D) */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  
+  /* Hiệu ứng chuyển động mượt mà */
+  transition: all 0.3s ease;
+  outline: none;
+  display: inline-block;
+  text-align: center;
+}
+
+/* Hiệu ứng khi di chuột vào (Hover) */
+.btn-study:hover {
+  transform: translateY(-3px); /* Nút bay lên nhẹ */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); /* Bóng đậm hơn */
+  filter: brightness(1.1); /* Sáng hơn một chút */
+}
+
+/* Hiệu ứng khi click vào (Active) */
+.btn-study:active {
+  transform: translateY(2px); /* Nút lún xuống khi bấm */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.container {
+  display: flex;
+  justify-content: center; /* Căn giữa theo chiều ngang */
+  align-items: center;     /* Căn giữa theo chiều dọc (nếu container có chiều cao) */
+  height: auto;           /* Ví dụ về chiều cao */
+}
+
+
+
 </style>
 </head>
 
@@ -203,10 +247,13 @@ button:hover { transform: scale(1.05); }
   <label>Số câu: <span id="countLabel">10</span></label>
   <input type="range" id="limitWord" min="1" max="100" value="10" />
   <select id="sourceSelect">
-    <option value="random">Ngẫu nhiên</option>
-    <option value="recent">Mới nhất</option>
+    <option value="random">🎲 Ngẫu nhiên</option>
+    <option value="recent">✨ Mới nhất</option>
   </select>
-  <button onclick="startGame()">Start</button>
+  <div class="container">
+      <button class="btn-study" onclick="startGame()">🚀 Start</button>
+  </div>
+  
 </div>
 
 <!-- ========== GAME ========== -->
@@ -230,7 +277,7 @@ button:hover { transform: scale(1.05); }
   <div id="vnMeaning"></div>
   <div id="topCards"></div>
   <div id="dropZone"></div>
-  <button id="nextBtn" class="hidden" onclick="nextSentence()">Next</button>
+  <button id="nextBtn" class="btn-study" class="hidden" onclick="nextSentence()">Next</button>
 </div>
 
 <!-- ========== MODAL ========== -->
@@ -504,25 +551,32 @@ function showResult() {
 
   modal.classList.remove("hidden");
   modalContent.innerHTML = `
+    
     <h3>🎉 Hoàn thành</h3>
-    <p>⏱ ${timeEl.textContent}</p>
-    <p>⭐ ${score}/${sentences.length}</p>
-    <button onclick="restartGame()">🔄 Chơi lại</button>
-    <button onclick="location.reload()">✨ Tạo mới</button>
+    <p>⏱️ Thời gian: ${timeEl.textContent}</p>
+    <p>⭐ Điểm số: ${score}/${sentences.length}</p>
+     <div class="container">
+    <button class="btn-study" onclick="restartGame()">🔄 Chơi lại</button>
+    <button class="btn-study" onclick="location.reload()">✨ Tạo mới</button>
+    </div>
   `;
 }
-function showModal(msg) {
+function showModal(title, msg) {
   const time = Math.floor((Date.now() - startTime) / 1000);
   modal.classList.remove("hidden");
   modalContent.innerHTML = `
+    <p><h3>${title}</h3></p>
     <p>${msg}</p>
-    <button onclick="location.reload()">✨ Tạo mới</button>
+    <div class="container">
+      <button class="btn-study" onclick="location.reload()">✨ Tạo mới</button>
+    </div>
+    </div>
   `;
 }
 
 function restartGame() {
   if(sentences.length < 1) {
-    showModal('⚠ Không thể tạo game do từ bạn chọn không có ví dụ!!!');
+    showModal('Cảnh báo', '⚠️ Không thể tạo game do từ bạn chọn không có ví dụ!!!');
     return;
   }
 
