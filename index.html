@@ -243,10 +243,12 @@ button:hover { transform: scale(1.05); }
 <!-- ========== SETUP ========== -->
 <div id="setup">
   <h2>🧩 ORDER UP!!!</h2>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
   <input id="username" placeholder="Your name" />
-
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+ <select id="sourceSelect">
+    <option value="recent">✨ Mới nhất</option>
+    <option value="random">🎲 Ngẫu nhiên</option>
+  </select>
   <div>
   <label>Phạm vi từ card số:</label>
     <input type="number" id="startRow" value="10" min="1" />
@@ -259,10 +261,7 @@ button:hover { transform: scale(1.05); }
 
   <label>Số câu: <span id="countLabel">10</span></label>
   <input type="range" id="limitWord" min="1" max="100" value="10" />
-  <select id="sourceSelect">
-    <option value="random">🎲 Ngẫu nhiên</option>
-    <option value="recent">✨ Mới nhất</option>
-  </select>
+ 
   <div class="container">
       <button class="btn-study" onclick="startGame()">🚀 Start</button>
   </div>
@@ -319,16 +318,18 @@ const errorMsg = document.getElementById('errorMsg');
 
 /* ================== FETCH ================== */
 async function startGame() {
+  
   const user = username.value.trim() || '';
   const limit = +parseInt(limitWord.value, 10);
   const mode = sourceSelect.value;
   const start = +parseInt(startRow.value, 10);
   const end = +parseInt(endRow.value, 10);
 
+  errorMsg.innerText='⏳ Đang tải dữ liệu...';
   let words = await fetchWords(user, limit, mode, start,end);
 
   if (words.length < 1) {
-    errorMsg.innerText='❌ Không đủ số từ để bắt đầu.';
+    errorMsg.innerText='❌ Không có từ nào để bắt đầu.';
     return;
   }
 
@@ -407,7 +408,6 @@ function createCard(text){
   card.addEventListener('click', () => moveCard(card));
   return card;
 }
-
 
 function moveCard(card){
   const fromPool = card.parentElement === topCards;
